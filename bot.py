@@ -47,7 +47,7 @@ STRINGS = {
     "es": {"welcome": "¡Bienvenido al Bot de Tienda IA! 👋", "shop": "🛍️ Ver Productos", "cart": "🛒 Mi Carrito", "track": "📦 Rastrear Pedido", "faq": "❓ FAQ", "empty": "🛒 Tu carrito está vacío."},
     "de": {"welcome": "Willkommen beim KI-Shop-Bot! 👋", "shop": "🛍️ Produkte ansehen", "cart": "🛒 Mein Warenkorb", "track": "📦 Bestellung verfolgen", "faq": "❓ FAQ", "empty": "🛒 Ihr Warenkorb ist leer."},
     "it": {"welcome": "Benvenuto nel Bot Negozio IA! 👋", "shop": "🛍️ Vedi Prodotti", "cart": "🛒 Il Mio Carrello", "track": "📦 Traccia Ordine", "faq": "❓ FAQ", "empty": "🛒 Il tuo carrello è vuoto."},
-    "ru": {"welcome": "Добро пожаловать в ИИ Магазин Бот! 👋", "shop": "🛍️ Смотреть товары", "cart": "🛒 Корзина", "track": "📦 Отследить заказ", "faq": "❓ FAQ", "empty": "🛒 Ваша корзина пуста."},
+    "ru": {"welcome": "Добро пожаловать в ИИ Магазиን Бот! 👋", "shop": "🛍️ Смотреть товары", "cart": "🛒 Корзина", "track": "📦 Отследить заказ", "faq": "❓ FAQ", "empty": "🛒 Ваша корзина пуста."},
     "zh": {"welcome": "欢迎使用人工智能商城机器人！ 👋", "shop": "🛍️ 浏览商品", "cart": "🛒 我的购物车", "track": "📦 追踪订单", "faq": "❓ 常见问题", "empty": "🛒 您的购物车是空的。"}
 }
 
@@ -163,7 +163,7 @@ def cart_actions(call):
             f"💳 **Payment Options / የክፍያ አማራጮች፦**\n"
             f"▪️ Telebirr / CBE Birr: `0911223344`\n"
             f"▪️ Chapa Gateway: [Click here to pay](https://chapa.co)\n\n"
-            f"Send screenshot to @your_username after paying!"
+            f"የከፈሉበትን ደረሰኝ በውስጥ መስመር ይላኩ።"
         )
         bot.edit_message_text(pay_text, chat_id, call.message.message_id, parse_mode="Markdown")
         bot.send_message(ADMIN_ID, f"🔔 **New Order {order_id}!** Approve using `/approve {order_id}`")
