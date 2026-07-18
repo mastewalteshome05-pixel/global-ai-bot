@@ -6,20 +6,21 @@ import google.generativeai as genai
 import requests
 from flask import Flask
 
-# 1. የፍላስክ ሰርቨር ማዋቀር (Render እንዳይዘጋ)
+# 1. የፍላስክ ሰርቨር ማዋቀር (Render እንዳይዘጋ) - Threading በ Daemon የተስተካከለ
 app = Flask('')
 
 @app.route('/')
 def home():
-    return "Global AI Customer Service Bot is Running!"
+    return "Global AI Customer Service Bot is Running Smoothly!"
 
 def run_flask():
     port = int(os.environ.get("PORT", 8080))
     app.run(host='0.0.0.0', port=port)
 
-threading.Thread(target=run_flask).start()
+# daemon=True ቦቱ ሲቆም ሰርቨሩ አብሮ እንዲቆም ያደርጋል
+threading.Thread(target=run_flask, daemon=True).start()
 
-# 2. የአንተ እውነተኛ መለያዎች (የተተኩ)
+# 2. የአንተ እውነተኛ መለያዎች
 TELEGRAM_TOKEN = '8645911917:AAHty0mzRmgnAxxyy3HMI5GzNwacGUn6CkQ'
 ADMIN_ID = 7585327665
 GEMINI_API_KEY = 'AQ.Ab8RN6IUk09HCemdQmdNVJMIZgUGrUA30EZn0CgEemuPPguZqg'
@@ -28,27 +29,62 @@ bot = telebot.TeleBot(TELEGRAM_TOKEN)
 genai.configure(api_key=GEMINI_API_KEY)
 ai_model = genai.GenerativeModel('gemini-1.5-flash')
 
-# 3. የምርት ካታሎግ (Product Catalog Data)
+# 3. የምርት ካታሎግ (በየቋንቋው የተተረጎመ መዋቅር)
 PRODUCTS = {
-    "p1": {"name": "የወንድ ጫማ (Nike)", "price": 3500, "stock": 10, "desc": "👟 ጥራት ያለው የኪነቲክ ስኒከር፣ መጠን፡ 40-44"},
-    "p2": {"name": "የሴት ቲሸርት (Zara)", "price": 1200, "stock": 5, "desc": "👕 ጥጥ የተሰራ ውብ ቲሸርት፣ መጠን፡ S, M, L"},
-    "p3": {"name": "ስማርት ሰዓት (Series 9)", "price": 4500, "stock": 0, "desc": "⌚ ሙሉ ታች ስክሪን፣ የጤና መከታተያ ያለው"}
+    "p1": {
+        "name": {"am": "የወንድ ጫማ (Nike)", "en": "Men's Shoes (Nike)"},
+        "price": 3500, 
+        "stock": 10, 
+        "desc": {"am": "👟 ጥራት ያለው የኪነቲክ ስኒከር፣ መጠን፡ 40-44", "en": "👟 High-quality kinetic sneakers, size: 40-44"}
+    },
+    "p2": {
+        "name": {"am": "የሴት ቲሸርት (Zara)", "en": "Women's T-Shirt (Zara)"},
+        "price": 1200, 
+        "stock": 5, 
+        "desc": {"am": "👕 ጥጥ የተሰራ ውብ ቲሸርት፣ መጠን፡ S, M, L", "en": "👕 Beautiful cotton t-shirt, size: S, M, L"}
+    },
+    "p3": {
+        "name": {"am": "ስማርት ሰዓት (Series 9)", "en": "Smart Watch (Series 9)"},
+        "price": 4500, 
+        "stock": 0, 
+        "desc": {"am": "⌚ ሙሉ ታች ስክሪን፣ የጤና መከታተያ ያለው", "en": "⌚ Full touch screen with health tracker"}
+    }
 }
 
-# 12 ቋንቋዎችን ያካተተ የተጠቃሚ መዋቅር
+# 12 ቋንቋዎችን ያካተተ የተሟላ የትርጉም መዝገብ
 STRINGS = {
-    "am": {"welcome": "እንኳን ወደ AI የሽያጭ ረዳት ቦት በደህና መጡ! 👋", "shop": "🛍️ ምርቶችን እይ", "cart": "🛒 የእኔ ጋሪ", "track": "📦 ትዕዛዝ መከታተያ", "faq": "❓ መረጃ (FAQ)", "empty": "🛒 ጋሪዎ ባዶ ነው።"},
-    "en": {"welcome": "Welcome to AI Customer Service Bot! 👋", "shop": "🛍️ Shop Products", "cart": "🛒 My Cart", "track": "📦 Track Order", "faq": "❓ FAQ Info", "empty": "🛒 Your cart is empty."},
-    "om": {"welcome": "Baga Gara AI Assistant Bot nagaan dhuftan! 👋", "shop": "🛍️ Oomishaalee", "cart": "🛒 Kaartii Koo", "track": "📦 Hordoffii", "faq": "❓ FAQ", "empty": "🛒 Kaartiin keessan duudaadha."},
-    "ti": {"welcome": "እንቋዕ ናብ AI ረዳት ቦት ብደሓን መጻእኹም! 👋", "shop": "🛍️ ፍርያት ርአ", "cart": "🛒 ዓንደ ጋሪ", "track": "📦 ምክትታል", "faq": "❓ ሕቶታት", "empty": "🛒 ጋሪኹም ባዶ እዩ።"},
-    "so": {"welcome": "Ku soo dhawaada AI Assistant Bot! 👋", "shop": "🛍️ Eeg Alaabta", "cart": "🛒 Kooratada", "track": "📦 La soco", "faq": "❓ FAQ", "empty": "🛒 Kooratadaadu waa maran tahay."},
-    "ar": {"welcome": "مرحبًا بك في بوت خدمة العملاء الذكي! 👋", "shop": "🛍️ عرض المنتجات", "cart": "🛒 عربة التسوق", "track": "📦 تتبع الطلب", "faq": "❓ الأسئلة الشائعة", "empty": "🛒 عربة التسوق فارغة."},
-    "fr": {"welcome": "Bienvenue sur le Bot Boutique IA ! 👋", "shop": "🛍️ Voir Produits", "cart": "🛒 Mon Panier", "track": "📦 Suivre Commande", "faq": "❓ FAQ", "empty": "🛒 Votre panier est vide."},
-    "es": {"welcome": "¡Bienvenido al Bot de Tienda IA! 👋", "shop": "🛍️ Ver Productos", "cart": "🛒 Mi Carrito", "track": "📦 Rastrear Pedido", "faq": "❓ FAQ", "empty": "🛒 Tu carrito está vacío."},
-    "de": {"welcome": "Willkommen beim KI-Shop-Bot! 👋", "shop": "🛍️ Produkte ansehen", "cart": "🛒 Mein Warenkorb", "track": "📦 Bestellung verfolgen", "faq": "❓ FAQ", "empty": "🛒 Ihr Warenkorb ist leer."},
-    "it": {"welcome": "Benvenuto nel Bot Negozio IA! 👋", "shop": "🛍️ Vedi Prodotti", "cart": "🛒 Il Mio Carrello", "track": "📦 Traccia Ordine", "faq": "❓ FAQ", "empty": "🛒 Il tuo carrello è vuoto."},
-    "ru": {"welcome": "Добро пожаловать в ИИ Магазиን Бот! 👋", "shop": "🛍️ Смотреть товары", "cart": "🛒 Корзина", "track": "📦 Отследить заказ", "faq": "❓ FAQ", "empty": "🛒 Ваша корзина пуста."},
-    "zh": {"welcome": "欢迎使用人工智能商城机器人！ 👋", "shop": "🛍️ 浏览商品", "cart": "🛒 我的购物车", "track": "📦 追踪订单", "faq": "❓ 常见问题", "empty": "🛒 您的购物车是空的。"}
+    "am": {
+        "welcome": "እንኳን ወደ AI የሽያጭ ረዳት ቦት በደህና መጡ! 👋", 
+        "shop": "🛍️ ምርቶችን እይ", "cart": "🛒 የእኔ ጋሪ", "track": "📦 ትዕዛዝ መከታተያ", "faq": "❓ መረጃ (FAQ)", 
+        "empty": "🛒 ጋሪዎ ባዶ ነው።", "price": "ዋጋ", "status": "ሁኔታ", "instock": "✅ ስቶክ አለ", "outstock": "❌ አሁን ላይ አልቋል",
+        "faq_text": "🛵 **ማድረሻ**፦ አዲስ አበባ ውስጥ በ2 ሰዓት፣ ለክፍለሀገር በ1 ቀን ይደርሳል።\n🔄 **መለዋወጥ**፦ በ48 ሰዓት ውስጥ መቀየር ይቻላል።"
+    },
+    "en": {
+        "welcome": "Welcome to AI Customer Service Bot! 👋", 
+        "shop": "🛍️ Shop Products", "cart": "🛒 My Cart", "track": "📦 Track Order", "faq": "❓ FAQ Info", 
+        "empty": "🛒 Your cart is empty.", "price": "Price", "status": "Status", "instock": "✅ In Stock", "outstock": "❌ Out of Stock",
+        "faq_text": "🛵 **Delivery**: 2 hours within Addis Ababa, 1 day for regional cities.\n🔄 **Returns**: Exchange allowed within 48 hours."
+    },
+    "om": {
+        "welcome": "Baga Gara AI Assistant Bot nagaan dhuftan! 👋", 
+        "shop": "🛍️ Oomishaalee", "cart": "🛒 Kaartii Koo", "track": "📦 Hordoffii", "faq": "❓ FAQ", 
+        "empty": "🛒 Kaartiin keessan duudaadha.", "price": "Gatii", "status": "Haala", "instock": "✅ Jira", "outstock": "❌ Dhumateera",
+        "faq_text": "🛵 **Ergaa**: Finfinnee keessatti sa'aatii 2, magaalota biroof guyyaa 1.\n🔄 **Jijjiirraa**: Sa'aatii 48 keessatti jijjiiruun ni danda'ama."
+    },
+    "ti": {
+        "welcome": "እንቋዕ ናብ AI ረዳት ቦት ብደሓን መጻእኹም! 👋", 
+        "shop": "🛍️ ፍርያት ርአ", "cart": "🛒 ዓንደ ጋሪ", "track": "📦 ምክትታል", "faq": "❓ ሕቶታት", 
+        "empty": "🛒 ጋሪኹም ባዶ እዩ።", "price": "ዋጋ", "status": "ኩነታት", "instock": "✅ ኣሎ", "outstock": "❌ ተወዲኡ",
+        "faq_text": "🛵 **ዕደላ**: አብ ውሽጢ አዲስ አበባ ብ2 ሰዓት፣ ንድንበኛታት ክፍለዓለም ብ1 መዓልቲ።\n🔄 **ምቅያር**: አብ ውሽጢ 48 ሰዓት ምቅያር ይከአል።"
+    },
+    "so": {"welcome": "Ku soo dhawaada AI Assistant Bot! 👋", "shop": "🛍️ Eeg Alaabta", "cart": "🛒 Kooratada", "track": "📦 La soco", "faq": "❓ FAQ", "empty": "🛒 Kooratadaadu waa maran tahay.", "price": "Qiimaha", "status": "Xaaladda", "instock": "✅ Waa la heli karaa", "outstock": "❌ Waa dhamaaday", "faq_text": "🛵 **Gaarsiinta**: 2 saac gudahood caasimada.\n🔄 **Beddelidda**: Waxaa lagu beddeli karaa 48 saac gudahood."},
+    "ar": {"welcome": "مرحبًا بك في بوت خدمة العملاء! 👋", "shop": "🛍️ عرض المنتجات", "cart": "🛒 عربة التسوق", "track": "📦 تتبع الطلب", "faq": "❓ الأسئلة الشائعة", "empty": "🛒 عربة التسوق فارغة.", "price": "السعر", "status": "الحالة", "instock": "✅ متوفر", "outstock": "❌ غير متوفر", "faq_text": "🛵 **التوصيل**: ساعتان في العاصمة، يوم واحد للولايات.\n🔄 **الاسترجاع**: متاح خلال 48 ساعة."},
+    "fr": {"welcome": "Bienvenue sur le Bot Boutique IA ! 👋", "shop": "🛍️ Voir Produits", "cart": "🛒 Mon Panier", "track": "📦 Suivre Commande", "faq": "❓ FAQ", "empty": "🛒 Votre panier est vide.", "price": "Prix", "status": "Statut", "instock": "✅ En Stock", "outstock": "❌ Rupture de stock", "faq_text": "🛵 **Livraison**: 2 heures en ville, 1 jour pour les régions.\n🔄 **Retour**: Échange possible sous 48 heures."},
+    "es": {"welcome": "¡Bienvenido al Bot de Tienda IA! 👋", "shop": "🛍️ Ver Productos", "cart": "🛒 Mi Carrito", "track": "📦 Rastrear Pedido", "faq": "❓ FAQ", "empty": "🛒 Tu carrito está vacío.", "price": "Precio", "status": "Estado", "instock": "✅ En Stock", "outstock": "❌ Agotado", "faq_text": "🛵 **Entrega**: 2 horas en la ciudad, 1 día para provincias.\n🔄 **Cambios**: Permitidos dentro de las 48 horas."},
+    "de": {"welcome": "Willkommen beim KI-Shop-Bot! 👋", "shop": "🛍️ Produkte ansehen", "cart": "🛒 Mein Warenkorb", "track": "📦 Bestellung verfolgen", "faq": "❓ FAQ", "empty": "🛒 Ihr Warenkorb ist leer.", "price": "Preis", "status": "Status", "instock": "✅ Auf Lager", "outstock": "❌ Ausverkauft", "faq_text": "🛵 **Lieferung**: 2 Stunden in der Stadt, 1 Tag für Regionen.\n🔄 **Rückgabe**: Umtausch innerhalb von 48 Stunden möglich."},
+    "it": {"welcome": "Benvenuto nel Bot Negozio IA! 👋", "shop": "🛍️ Vedi Prodotti", "cart": "🛒 Il Mio Carrello", "track": "📦 Traccia Ordine", "faq": "❓ FAQ", "empty": "🛒 Il tuo carrello é vuoto.", "price": "Prezzo", "status": "Stato", "instock": "✅ Disponibile", "outstock": "❌ Esaurito", "faq_text": "🛵 **Consegna**: 2 ore in città, 1 giorno per le province.\n🔄 **Reso**: Cambio consentito entro 48 ore."},
+    "ru": {"welcome": "Добро пожаловать в ИИ Магазин Бот! 👋", "shop": "🛍️ Смотреть товары", "cart": "🛒 Корзина", "track": "📦 Отследить заказ", "faq": "❓ FAQ", "empty": "🛒 Ваша корзина пуста.", "price": "Цена", "status": "Статус", "instock": "✅ В наличии", "outstock": "❌ Нет в наличии", "faq_text": "🛵 **Доставка**: 2 часа по городу, 1 день в регионы.\n🔄 **Обмен**: Возможен в течение 48 часов."},
+    "zh": {"welcome": "欢迎使用人工智能商城机器人！ 👋", "shop": "🛍️ 浏览商品", "cart": "🛒 我的购物车", "track": "📦 追踪订单", "faq": "❓ 常见问题", "empty": "🛒 您的购物车是空的。", "price": "价格", "status": "状态", "instock": "✅ 有货", "outstock": "❌ 断货", "faq_text": "🛵 **配送**：市内 2 小时送达， news 区域 1 天。\n🔄 **退换**：48 小时内支持调换。"}
 }
 
 user_carts = {}
@@ -67,6 +103,15 @@ def get_main_menu(lang):
         types.KeyboardButton(ln["faq"])
     )
     return markup
+
+# ቋንቋ መመረጡን የሚያረጋግጥ ጌትኪፐር ማጣሪያ (Language Gatekeeper Decorator)
+def check_language_selected(func):
+    def wrapper(message, *args, **kwargs):
+        chat_id = message.chat.id
+        if chat_id not in user_languages:
+            return choose_language(message)
+        return func(message, *args, **kwargs)
+    return wrapper
 
 @bot.message_handler(commands=['start'])
 def choose_language(message):
@@ -97,13 +142,22 @@ def set_language(call):
     ln = STRINGS[lang_code]
     bot.send_message(chat_id, ln["welcome"], reply_markup=get_main_menu(lang_code))
 
-# ምርቶችን በሙሉ ማሳያ
+# ምርቶችን በሙሉ ማሳያ (ሙሉ በሙሉ የተተረጎመ)
 @bot.message_handler(func=lambda m: any(m.text == STRINGS[k]["shop"] for k in STRINGS if m.chat.id in user_languages))
+@check_language_selected
 def list_products(message):
     chat_id = message.chat.id
+    lang = user_languages.get(chat_id, "en")
+    ln = STRINGS[lang]
+    
     for p_id, info in PRODUCTS.items():
-        status = f"✅ In Stock ({info['stock']})" if info['stock'] > 0 else "❌ Out of Stock"
-        text = f"📦 **{info['name']}**\n💰 Price: {info['price']} ETB\n📌 Status: {status}\n📝 Details: {info['desc']}"
+        # ስቶክ ሁኔታ ትርጉም
+        status_text = f"{ln['instock']} ({info['stock']})" if info['stock'] > 0 else ln['outstock']
+        # የምርት ስም እና መግለጫ ትርጉም (አማርኛ ካለ አማርኛ፣ ካልሆነ እንግሊዝኛ)
+        p_name = info['name'].get(lang, info['name']['en'])
+        p_desc = info['desc'].get(lang, info['desc']['en'])
+        
+        text = f"📦 **{p_name}**\n💰 {ln['price']}: {info['price']} ETB\n📌 {ln['status']}: {status_text}\n📝 {p_desc}"
         markup = types.InlineKeyboardMarkup()
         if info['stock'] > 0:
             markup.add(types.InlineKeyboardButton("🛒 Add to Cart", callback_data=f"shopadd_{p_id}"))
@@ -119,6 +173,7 @@ def add_to_cart(call):
 
 # ጋሪ እይታ
 @bot.message_handler(func=lambda m: any(m.text == STRINGS[k]["cart"] for k in STRINGS if m.chat.id in user_languages))
+@check_language_selected
 def show_cart(message):
     chat_id = message.chat.id
     lang = user_languages.get(chat_id, "en")
@@ -133,7 +188,8 @@ def show_cart(message):
     for p_id, qty in cart.items():
         subtotal = PRODUCTS[p_id]['price'] * qty
         total += subtotal
-        text += f"▪️ {PRODUCTS[p_id]['name']} x {qty} = {subtotal} ETB\n"
+        p_name = PRODUCTS[p_id]['name'].get(lang, PRODUCTS[p_id]['name']['en'])
+        text += f"▪️ {p_name} x {qty} = {subtotal} ETB\n"
     text += f"\n💵 **Total: {total} ETB**"
     
     markup = types.InlineKeyboardMarkup()
@@ -170,6 +226,7 @@ def cart_actions(call):
 
 # ትዕዛዝ መከታተያ ቁልፍ
 @bot.message_handler(func=lambda m: any(m.text == STRINGS[k]["track"] for k in STRINGS if m.chat.id in user_languages))
+@check_language_selected
 def track_order(message):
     msg = bot.reply_to(message, "🔢 Enter your Order ID / የትዕዛዝ ቁጥርዎን ያስገቡ፦")
     bot.register_next_step_handler(msg, process_track)
@@ -184,6 +241,15 @@ def process_track(message):
     except:
         bot.reply_to(message, "❌ Invalid ID.")
 
+# 🎯 Dedicated FAQ Handler (አዲስ የተጨመረ)
+@bot.message_handler(func=lambda m: any(m.text == STRINGS[k]["faq"] for k in STRINGS if m.chat.id in user_languages))
+@check_language_selected
+def handle_faq(message):
+    chat_id = message.chat.id
+    lang = user_languages.get(chat_id, "en")
+    faq_response = STRINGS[lang]["faq_text"]
+    bot.send_message(chat_id, faq_response, parse_mode="Markdown")
+
 # አድሚን ማጽደቂያ
 @bot.message_handler(commands=['approve'])
 def approve(message):
@@ -197,8 +263,9 @@ def approve(message):
         except:
             bot.reply_to(message, "Use: `/approve ID`")
 
-# ጠቅላላ የአለም አቀፍ የ AI ደንበኞች አገልግሎት ጥያቄ (FAQ & AI Help)
+# ጠቅላላ የአለም አቀፍ የ AI ደንበኞች አገልግሎት ጥያቄ (Language Gatekeeper የተጨመረበት)
 @bot.message_handler(func=lambda message: True)
+@check_language_selected
 def handle_global_ai(message):
     chat_id = message.chat.id
     bot.send_chat_action(chat_id, 'typing')
@@ -213,5 +280,5 @@ def handle_global_ai(message):
     except Exception as e:
         bot.reply_to(message, "❌ System busy, please try again.")
 
-print("Global AI Shop Bot is running live...")
+print("Global AI Shop Bot is running live with all fixes...")
 bot.infinity_polling()
