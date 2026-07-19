@@ -4,7 +4,7 @@ import hashlib
 import secrets
 import time
 import telebot
-from telebot import types
+from telebot import types, apihelper
 import google.generativeai as genai
 from flask import Flask
 import psycopg2
@@ -14,7 +14,7 @@ app = Flask('')
 
 @app.route('/')
 def home():
-    return "Production Multi-Tenant AI Shop Engine with Persistent PostgreSQL is Running!"
+    return "Multi-Tenant AI Shop Engine with PostgreSQL is Running Perfectly!"
 
 def run_flask():
     port = int(os.environ.get("PORT", 8080))
@@ -39,17 +39,16 @@ except Exception as e:
     print(f"❌ Failed to connect to PostgreSQL: {e}")
     raise e
 
-# Safe connection retrieval helper (Handles Render auto-reconnects)
+# Safe connection retrieval helper (Fixed Global Declaration)
 def get_safe_connection():
+    global db_pool
     try:
-        global db_pool
         conn = db_pool.getconn()
         with conn.cursor() as cur:
             cur.execute("SELECT 1")
         return conn
     except (psycopg2.InterfaceError, psycopg2.OperationalError):
         print("🔄 Re-initializing connection pool due to disconnect...")
-        global db_pool
         db_pool = psycopg2.pool.SimpleConnectionPool(1, 20, dsn=DATABASE_URL)
         return db_pool.getconn()
 
@@ -313,7 +312,7 @@ def setup_bot_handlers(token):
                 try:
                     bot.send_photo(chat_id, image_url, caption=text, reply_markup=markup, parse_mode="Markdown")
                     continue
-                except telebot.api_helper.ApiTelegramException:
+                except apihelper.ApiTelegramException:
                     text += "\n\n⚠️ *(Image could not be loaded)*"
             
             bot.send_message(chat_id, text, reply_markup=markup, parse_mode="Markdown")
@@ -545,5 +544,6 @@ if RAW_TOKENS:
     LIVE_TOKENS = [t.strip() for t in RAW_TOKENS.split(",") if t.strip()]
     for t in LIVE_TOKENS:
         setup_bot_handlers(t)
+
 while True:
     time.sleep(3600)
