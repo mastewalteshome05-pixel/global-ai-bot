@@ -42,8 +42,8 @@ except Exception as e:
 # Safe connection retrieval helper (Handles Render auto-reconnects)
 def get_safe_connection():
     try:
+        global db_pool
         conn = db_pool.getconn()
-        # ግንኙነቱ በህይወት መኖሩን ቼክ ማድረግ
         with conn.cursor() as cur:
             cur.execute("SELECT 1")
         return conn
@@ -309,13 +309,11 @@ def setup_bot_handlers(token):
                 btn_text = "🛒 ወደ ጋሪ ጨምር" if lang == "am" else "🛒 Add to Cart"
                 markup.add(types.InlineKeyboardButton(btn_text, callback_data=f"shopadd_{p_id}"))
             
-            # 🟢 🟢 🟢 የፎቶ ስህተት ጥበቃ (Photo Fallback Layer) 🟢 🟢 🟢
             if image_url:
                 try:
                     bot.send_photo(chat_id, image_url, caption=text, reply_markup=markup, parse_mode="Markdown")
                     continue
                 except telebot.api_helper.ApiTelegramException:
-                    # ፎቶው ካልሰራ ወይም ከተሰረዘ በጽሑፍ ብቻ በሰላም ያልፋል
                     text += "\n\n⚠️ *(Image could not be loaded)*"
             
             bot.send_message(chat_id, text, reply_markup=markup, parse_mode="Markdown")
@@ -327,7 +325,6 @@ def setup_bot_handlers(token):
         lang = get_user_lang(chat_id)
         p_id = int(call.data.split("_")[1])
         
-        # Cross-Store Validation: ምርቱ የዚህ ሱቅ መሆኑን ማረጋገጥ
         conn = get_safe_connection()
         try:
             with conn.cursor() as cursor:
@@ -362,7 +359,6 @@ def setup_bot_handlers(token):
         try:
             with conn.cursor() as cursor:
                 for p_id, qty in list(cart.items()):
-                    # 🟠 🟠 🟠 Token filter toegevoegd: Token leakage መከላከያ 🟠 🟠 🟠
                     cursor.execute("SELECT name_am, name_en, price FROM products WHERE id=%s AND token=%s", (p_id, token))
                     row = cursor.fetchone()
                     if row:
@@ -372,7 +368,6 @@ def setup_bot_handlers(token):
                         total += subtotal
                         text += f"▪️ {name} x {qty} = {subtotal} ETB\n"
                     else:
-                        # የሌላ ሱቅ ምርት ከሆነ ከጋሪው በራስ ሰር ሰርዝ
                         del cart[p_id]
         finally:
             db_pool.putconn(conn)
@@ -403,7 +398,6 @@ def setup_bot_handlers(token):
             try:
                 with conn.cursor() as cursor:
                     for p_id, qty in list(cart.items()):
-                        # 🟠 Token Filter ለ cross-store leak መከላከያ
                         cursor.execute("SELECT price FROM products WHERE id=%s AND token=%s", (p_id, token))
                         p_row = cursor.fetchone()
                         if p_row: 
@@ -444,7 +438,6 @@ def setup_bot_handlers(token):
             conn = get_safe_connection()
             try:
                 with conn.cursor() as cursor:
-                    # 🟠 Token Check: ትዕዛዙ የዚህ ሱቅ መሆኑን ማረጋገጥ
                     cursor.execute("UPDATE orders SET status_am=%s, status_en=%s WHERE id=%s AND token=%s", 
                                    ("ክፍያ ተልኳል (በማረጋገጥ ላይ)", "Payment sent (Verifying)", order_id, token))
                     conn.commit()
@@ -515,7 +508,6 @@ def setup_bot_handlers(token):
             conn = get_safe_connection()
             try:
                 with conn.cursor() as cursor:
-                    # 🟠 Token Check: የሌላ ሱቅ ትዕዛዝ እንዳይፈቀድ ማጣሪያ
                     cursor.execute("SELECT customer_id FROM orders WHERE id=%s AND token=%s", (order_id, token))
                     row = cursor.fetchone()
                     if row:
