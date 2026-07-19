@@ -545,6 +545,5 @@ if RAW_TOKENS:
     LIVE_TOKENS = [t.strip() for t in RAW_TOKENS.split(",") if t.strip()]
     for t in LIVE_TOKENS:
         setup_bot_handlers(t)
-
 while True:
     time.sleep(3600)
